@@ -1,5 +1,5 @@
 """
-Dark GPT Bot - CLEAN RESPONSE ONLY
+Unchitter Bot - Telegram AI Assistant
 Developer: @vikash1178
 """
 
@@ -9,13 +9,14 @@ import time
 import asyncio
 import json
 import re
+import os
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 
 # ==================== CONFIG ====================
-BOT_TOKEN = '8696983600:AAGUjUJ7KrADo8Xa3--NU7dClihSb70NF3g'
-API_URL = 'https://wormgpt.freeapihub.workers.dev/chat?q='
+BOT_TOKEN = os.getenv('BOT_TOKEN', 'YOUR_BOT_TOKEN_HERE')
+API_URL = os.getenv('API_URL', 'https://wormgpt.freeapihub.workers.dev/chat?q=')
 
 # ==================== LOGGING ====================
 logging.basicConfig(
@@ -30,30 +31,25 @@ user_stats = {}
 
 # ==================== API CALL ====================
 def call_api(query):
-    """Call API and extract ONLY the reply text"""
+    """Call API and extract reply text"""
     try:
         response = requests.get(f"{API_URL}{query}", timeout=30)
         
         if response.status_code == 200:
             data = response.json()
             
-            # Extract ONLY the reply/answer text
             if isinstance(data, dict):
-                # Try common response fields
                 reply = data.get('reply', data.get('answer', data.get('response', data.get('result', ''))))
                 
-                # If reply is still a dict, extract text from it
                 if isinstance(reply, dict):
                     reply = reply.get('text', reply.get('message', str(reply)))
                 
-                # If reply is empty, try to get the whole response
                 if not reply:
                     reply = str(data)
                 
-                # Clean up any remaining wrapper text
                 reply = str(reply)
                 
-                # Remove common wrappers
+                # Clean up wrapper text
                 patterns = [
                     r"\{.*?'reply':\s*'",
                     r"\{.*?'answer':\s*'",
@@ -70,31 +66,18 @@ def call_api(query):
                 for pattern in patterns:
                     reply = re.sub(pattern, '', reply)
                 
-                # Remove 'question' and 'status' fields if they appear
                 reply = re.sub(r",?\s*'question':\s*'[^']*'", '', reply)
                 reply = re.sub(r",?\s*'status':\s*'[^']*'", '', reply)
                 reply = re.sub(r",?\s*\"question\":\s*\"[^\"]*\"", '', reply)
                 reply = re.sub(r",?\s*\"status\":\s*\"[^\"]*\"", '', reply)
                 
-                # Clean up escaped characters
                 reply = reply.replace('\\n', '\n').replace('\\"', '"').replace("\\'", "'")
                 
-                # Remove any trailing commas or extra spaces
                 reply = reply.strip()
                 if reply.startswith(','):
                     reply = reply[1:].strip()
                 if reply.endswith(','):
                     reply = reply[:-1].strip()
-                
-                # If still has dict-like structure, try to extract text
-                if reply.startswith('{') and ':' in reply:
-                    try:
-                        # Try to parse as JSON and extract text
-                        clean_data = json.loads(reply.replace("'", '"'))
-                        if isinstance(clean_data, dict):
-                            reply = clean_data.get('reply', clean_data.get('answer', clean_data.get('response', clean_data.get('result', str(clean_data)))))
-                    except:
-                        pass
                 
                 return reply.strip()
             
@@ -135,13 +118,13 @@ def create_main_menu():
 
 # ==================== COMMANDS ====================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Welcome message with UI"""
+    """Welcome message"""
     user = update.effective_user
     stats = get_user_stats(user.id)
     
     welcome = f"""
 ╔═══════════════════════════════╗
-║     ⚡ DARK GPT ACTIVATED ⚡     ║
+║     🤖 UNCHITTER BOT         ║
 ╠═══════════════════════════════╣
 ║                               ║
 ║  👤 User: {user.first_name}
@@ -149,13 +132,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ║  📊 Qs: {stats['questions']}
 ║  📅 First: {stats['first_seen']}
 ║                               ║
-║  🤖 Ask me anything!          ║
-║  🚀 Fast API responses        ║
-║  💡 24/7 Available            ║
+║  🤖 AI Powered Assistant     ║
+║  🚀 Fast API responses       ║
+║  💡 24/7 Available           ║
 ║                               ║
 ╚═══════════════════════════════╝
 
-📌 *Commands:*
+📌 Commands:
 /start - Main Menu
 /help - Help Guide
 /about - About Bot
@@ -164,24 +147,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 /stats - Your Stats
 /clear - Clear Session
 
-💬 *Just type your question!*
+💬 Just type your question!
     """
     
-    await update.message.reply_text(
-        welcome,
-        parse_mode='Markdown',
-        reply_markup=create_main_menu()
-    )
+    await update.message.reply_text(welcome, reply_markup=create_main_menu())
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Help guide with UI"""
+    """Help guide"""
     help_text = """
 ╔═══════════════════════════════╗
 ║     📖 HELP GUIDE             ║
 ╠═══════════════════════════════╣
 ║                               ║
 ║  🤖 What I do:               ║
-║  Answer questions using API  ║
+║  Answer questions using AI   ║
 ║  Powered by @vikash1178      ║
 ║                               ║
 ║  💬 How to use:              ║
@@ -205,24 +184,20 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ║                               ║
 ╚═══════════════════════════════╝
     """
-    await update.message.reply_text(
-        help_text,
-        parse_mode='Markdown',
-        reply_markup=create_main_menu()
-    )
+    await update.message.reply_text(help_text, reply_markup=create_main_menu())
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """About bot with UI"""
+    """About bot"""
     about_text = """
 ╔═══════════════════════════════╗
-║     🤖 DARK GPT BOT          ║
+║     🤖 UNCHITTER BOT         ║
 ╠═══════════════════════════════╣
 ║                               ║
 ║  📱 Telegram Bot              ║
 ║  👨‍💻 Developer: @vikash1178   ║
-║  📦 Version: 5.0.0            ║
+║  📦 Version: 6.0.0            ║
 ║  ⚙️ Engine: Custom API        ║
-║  🌐 Host: Telegram Cloud      ║
+║  🌐 Host: Render Cloud        ║
 ║                               ║
 ║  ✨ Features:                ║
 ║  ✅ Unlimited Questions      ║
@@ -230,6 +205,7 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ║  ✅ 24/7 Available           ║
 ║  ✅ Rate Limiting            ║
 ║  ✅ User Statistics          ║
+║  ✅ Auto-Restart             ║
 ║                               ║
 ║  📢 Contact:                 ║
 ║  @vikash1178                 ║
@@ -239,14 +215,10 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ║                               ║
 ╚═══════════════════════════════╝
     """
-    await update.message.reply_text(
-        about_text,
-        parse_mode='Markdown',
-        reply_markup=create_main_menu()
-    )
+    await update.message.reply_text(about_text, reply_markup=create_main_menu())
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """API status with UI"""
+    """API status"""
     msg = await update.message.reply_text("⏳ Checking API...")
     
     try:
@@ -270,20 +242,14 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ║                               ║
 ╚═══════════════════════════════╝
             """
-            await msg.edit_text(status_text, parse_mode='Markdown')
+            await msg.edit_text(status_text)
         else:
-            await msg.edit_text(
-                f"⚠️ API Status: {response.status_code}\nContact @vikash1178"
-            )
+            await msg.edit_text(f"⚠️ API Status: {response.status_code}\nContact @vikash1178")
     except:
-        await msg.edit_text(
-            "❌ **API OFFLINE**\n"
-            "Cannot reach API server.\n"
-            "🔧 Contact @vikash1178"
-        )
+        await msg.edit_text("❌ API OFFLINE\nCannot reach API server.\nContact @vikash1178")
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Ping command with UI"""
+    """Ping command"""
     start_time = time.time()
     await update.message.reply_text("🏓 Pong!")
     latency = round((time.time() - start_time) * 1000, 2)
@@ -294,17 +260,17 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ╠═══════════════════════════════╣
 ║                               ║
 ║  🏓 Response Time: {latency}ms
-║  📶 Status: {'🟢 Excellent' if latency < 200 else '🟡 Good' if latency < 500 else '🔴 Slow'}
+║  📶 Status: {'Excellent' if latency < 200 else 'Good' if latency < 500 else 'Slow'}
 ║                               ║
 ║  ━━━━━━━━━━━━━━━━━━━━━━━━━  ║
 ║  🤖 Bot is responsive!       ║
 ║                               ║
 ╚═══════════════════════════════╝
     """
-    await update.message.reply_text(ping_text, parse_mode='Markdown')
+    await update.message.reply_text(ping_text)
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """User statistics with UI"""
+    """User statistics"""
     user = update.effective_user
     stats = get_user_stats(user.id)
     
@@ -323,7 +289,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ║                               ║
 ╚═══════════════════════════════╝
     """
-    await update.message.reply_text(stats_text, parse_mode='Markdown')
+    await update.message.reply_text(stats_text)
 
 async def clear(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Clear session"""
@@ -332,45 +298,31 @@ async def clear(update: Update, context: ContextTypes.DEFAULT_TYPE):
         del user_cooldown[user_id]
     
     await update.message.reply_text(
-        "🧹 **Session Cleared!**\n"
+        "🧹 Session Cleared!\n"
         "✨ Your session has been reset.\n"
-        "💬 Ask something new!",
-        parse_mode='Markdown'
+        "💬 Ask something new!"
     )
 
 # ==================== MESSAGE HANDLER ====================
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Process user messages - returns ONLY the reply text"""
+    """Process user messages"""
     user = update.effective_user
     user_id = user.id
     user_message = update.message.text
     
-    # Update stats
     stats = get_user_stats(user_id)
     stats['questions'] += 1
     
-    # Rate limiting
     current_time = time.time()
     if user_id in user_cooldown:
         if current_time - user_cooldown[user_id] < 2:
-            await update.message.reply_text(
-                "⏳ **Slow down!** Please wait 2 seconds between messages.",
-                parse_mode='Markdown'
-            )
+            await update.message.reply_text("⏳ Slow down! Please wait 2 seconds between messages.")
             return
     user_cooldown[user_id] = current_time
     
-    # Show typing indicator
     await update.message.chat.send_action(action="typing")
-    
-    # Call API and get clean reply
     answer = call_api(user_message)
-    
-    # Send ONLY the reply text - NO BUTTONS, NO BOX, NO EXTRA
-    await update.message.reply_text(
-        answer,
-        parse_mode='Markdown'
-    )
+    await update.message.reply_text(answer)
 
 # ==================== CALLBACK HANDLER ====================
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -393,17 +345,15 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def main():
     """Start the bot"""
     print("╔═══════════════════════════════╗")
-    print("║     ⚡ DARK GPT BOT          ║")
+    print("║     🤖 UNCHITTER BOT         ║")
     print("╠═══════════════════════════════╣")
     print("║  👨‍💻 Developer: @vikash1178   ║")
-    print("║  📦 Version: 5.0.0            ║")
+    print("║  📦 Version: 6.0.0            ║")
     print("║  🤖 Status: Starting...       ║")
     print("╚═══════════════════════════════╝")
     
-    # Create application
     app = Application.builder().token(BOT_TOKEN).build()
     
-    # Add command handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("about", about))
@@ -411,21 +361,15 @@ async def main():
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("stats", stats))
     app.add_handler(CommandHandler("clear", clear))
-    
-    # Add message handler
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    
-    # Add callback handler
     app.add_handler(CallbackQueryHandler(button_callback))
     
     print("✅ Bot is running! Press Ctrl+C to stop.")
     
-    # Start the bot
     await app.initialize()
     await app.start()
     await app.updater.start_polling()
     
-    # Keep running
     try:
         while True:
             await asyncio.sleep(1)
