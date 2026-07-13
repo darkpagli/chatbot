@@ -1,6 +1,7 @@
 """
 Unchitter Bot - Telegram AI Assistant
 Developer: @vikash1178
+Bot: @Unchitterbot
 """
 
 import logging
@@ -15,8 +16,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 
 # ==================== CONFIG ====================
-BOT_TOKEN = os.getenv('BOT_TOKEN', 'YOUR_BOT_TOKEN_HERE')
-API_URL = os.getenv('API_URL', 'https://wormgpt.freeapihub.workers.dev/chat?q=')
+BOT_TOKEN = '8696983600:AAGUjUJ7KrADo8Xa3--NU7dClihSb70NF3g'
+API_URL = 'https://wormgpt.freeapihub.workers.dev/chat?q='
 
 # ==================== LOGGING ====================
 logging.basicConfig(
