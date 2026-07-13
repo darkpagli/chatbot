@@ -1,2 +1,8 @@
-python-telegram-bot==20.6
-requests
+
+# Core dependencies
+python-telegram-bot==20.0
+requests==2.31.0
+
+# Optional but recommended
+flask==3.0.0  # For web server (Render/Railway)
+gunicorn==21.2.0  # For production web server
