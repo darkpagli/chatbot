@@ -5,6 +5,28 @@ from flask import Flask
 import threading
 import os
 import time
+# ==================== ADD THIS AT THE TOP ====================
+
+
+# Create Flask app for health checks
+web_app = Flask(__name__)
+
+@web_app.route('/')
+@web_app.route('/health')
+def health():
+    return "OK", 200
+
+def run_webserver():
+    """Start Flask server for health checks"""
+    port = int(os.environ.get('PORT', 10000))
+    web_app.run(host='0.0.0.0', port=port)
+
+# Start web server in background (non-blocking)
+threading.Thread(target=run_webserver, daemon=True).start()
+print("🌐 Health check server started on port", os.environ.get('PORT', 10000))
+
+# ==================== YOUR EXISTING BOT CODE BELOW ====================
+# (Your bot code continues here...)
 
 app = Flask(__name__)
 
