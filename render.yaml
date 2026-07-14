@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: unchitter-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: BOT_TOKEN
+        value: 8696983600:AAGUjUJ7KrADo8Xa3--NU7dClihSb70NF3g
+      - key: API_URL
+        value: https://wormgpt.freeapihub.workers.dev/chat?q=
+      - key: RENDER
+        value: true
+      - key: WEBHOOK_URL
+        value: https://unchitter-bot.onrender.com/webhook
+      - key: PORT
+        value: 8080
