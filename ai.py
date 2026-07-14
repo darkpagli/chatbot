@@ -1,5 +1,5 @@
 """
-Unchitter Bot - Telegram AI Assistant
+Unchitter Bot - PERMANENT WEBHOOK MODE
 Developer: @vikash1178
 Bot: @Unchitterbot
 """
@@ -50,7 +50,6 @@ def call_api(query):
                 
                 reply = str(reply)
                 
-                # Clean up wrapper text
                 patterns = [
                     r"\{.*?'reply':\s*'",
                     r"\{.*?'answer':\s*'",
@@ -196,9 +195,10 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ║                               ║
 ║  📱 Telegram Bot              ║
 ║  👨‍💻 Developer: @vikash1178   ║
-║  📦 Version: 6.0.0            ║
+║  📦 Version: 7.0.0            ║
 ║  ⚙️ Engine: Custom API        ║
 ║  🌐 Host: Render Cloud        ║
+║  🔒 Mode: Webhook (Permanent) ║
 ║                               ║
 ║  ✨ Features:                ║
 ║  ✅ Unlimited Questions      ║
@@ -207,6 +207,7 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ║  ✅ Rate Limiting            ║
 ║  ✅ User Statistics          ║
 ║  ✅ Auto-Restart             ║
+║  ✅ No Conflict Guaranteed   ║
 ║                               ║
 ║  📢 Contact:                 ║
 ║  @vikash1178                 ║
@@ -342,17 +343,9 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.message.edit_reply_markup(reply_markup=None)
 
-# ==================== MAIN ====================
-async def main():
-    """Start the bot"""
-    print("╔═══════════════════════════════╗")
-    print("║     🤖 UNCHITTER BOT         ║")
-    print("╠═══════════════════════════════╣")
-    print("║  👨‍💻 Developer: @vikash1178   ║")
-    print("║  📦 Version: 6.0.0            ║")
-    print("║  🤖 Status: Starting...       ║")
-    print("╚═══════════════════════════════╝")
-    
+# ==================== BOT INSTANCE ====================
+def create_application():
+    """Create and configure the bot application"""
     app = Application.builder().token(BOT_TOKEN).build()
     
     app.add_handler(CommandHandler("start", start))
@@ -365,19 +358,50 @@ async def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(button_callback))
     
-    print("✅ Bot is running! Press Ctrl+C to stop.")
+    return app
+
+# ==================== MAIN ====================
+async def main():
+    """Start the bot with webhook or polling"""
+    print("╔═══════════════════════════════╗")
+    print("║     🤖 UNCHITTER BOT         ║")
+    print("╠═══════════════════════════════╣")
+    print("║  👨‍💻 Developer: @vikash1178   ║")
+    print("║  📦 Version: 7.0.0            ║")
+    print("║  🔒 Mode: PERMANENT WEBHOOK   ║")
+    print("╚═══════════════════════════════╝")
     
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
+    app = create_application()
     
-    try:
+    # Check if running on Render
+    is_render = os.environ.get('RENDER', False)
+    webhook_url = os.environ.get('WEBHOOK_URL', 'https://unchitter-bot.onrender.com/webhook')
+    
+    if is_render:
+        # WEBHOOK MODE — PERMANENT (No conflicts)
+        print(f"🔗 Setting webhook: {webhook_url}")
+        await app.bot.set_webhook(webhook_url)
+        print("✅ Webhook set successfully!")
+        print("✅ Bot running in WEBHOOK mode (PERMANENT, no conflicts)")
+        
+        # Keep the process alive
         while True:
-            await asyncio.sleep(1)
-    except KeyboardInterrupt:
-        await app.updater.stop()
-        await app.stop()
-        await app.shutdown()
+            await asyncio.sleep(60)
+    else:
+        # POLLING MODE — For local testing only
+        print("⚠️ Running in POLLING mode (local testing only)")
+        print("⚠️ DO NOT use this on production!")
+        await app.initialize()
+        await app.start()
+        await app.updater.start_polling()
+        
+        try:
+            while True:
+                await asyncio.sleep(1)
+        except KeyboardInterrupt:
+            await app.updater.stop()
+            await app.stop()
+            await app.shutdown()
 
 if __name__ == '__main__':
     try:
